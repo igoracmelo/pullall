@@ -43,7 +43,17 @@ function onsigint() {
   echo -e "${ORANGE}Script interrupted by user${NC}"
   echo -e "${RED}${#repos[@]}${NC} repositories weren't updated:"
   echo "${repos[@]}"
-  rm "$working_dir/.repos_left"
+  echo
+  
+  repos_failed=( $(cat "$wd/.repos_failed" 2> /dev/null) )
+
+  if [ $? -eq 0 ]; then
+    echo -e "${RED}${#repos_failed[@]}${NC} repositories failed to update:"
+    echo "${repos_failed[@]}"
+  fi
+
+  rm "$wd/.repos_left"
+  rm "$wd/.repos_failed" 2> /dev/null
   exit 2
 }
 
@@ -58,6 +68,7 @@ wd=$(pwd)
 export wd
 
 echo -n "" > .repos_left
+echo -n "" > .repos_failed
 
 for folder in ${folders[@]}; do
   echo $folder >> "$wd/.repos_left"
@@ -76,4 +87,12 @@ done
 
 wait
 
-rm "$working_dir/.repos_left"
+repos_failed=( $(cat "$wd/.repos_failed" 2> /dev/null) )
+
+if [ $? -eq 0 ]; then
+  echo -e "${RED}${#repos_failed[@]}${NC} repositories failed to update:"
+  echo "${repos_failed[@]}"
+fi
+
+rm "$wd/.repos_left"
+rm "$wd/.repos_failed" 2> /dev/null
