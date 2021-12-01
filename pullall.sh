@@ -20,10 +20,10 @@ function pull() {
   code="$?"
   msg=$(echo "$out" | egrep "changed|insertions|deletions|up to date\.")
 
-  repos_left=$(cat "$working_dir/.repos_left" | grep -vxF "$repo")
+  repos_left=$(cat "$wd/.repos_left" | grep -vxF "$repo")
   repos_count=$(echo -n "$repos_left" | grep -c ^)
 
-  echo -n "$repos_left" > "$working_dir/.repos_left"
+  echo -n "$repos_left" > "$wd/.repos_left"
   curr=$((total_repos - repos_count))
 
   if [ $code -eq 0 ]; then
@@ -32,12 +32,13 @@ function pull() {
   else
     echo -e "$curr. ${RED}fail${NC} -> $repo"
     echo -e "$out"
+    echo "$repo" >> "$wd/.repos_failed"
   fi
   echo
 }
 
 function onsigint() {
-  repos=( $(cat "$working_dir/.repos_left") )
+  repos=( $(cat "$wd/.repos_left") )
   echo
   echo -e "${ORANGE}Script interrupted by user${NC}"
   echo -e "${RED}${#repos[@]}${NC} repositories weren't updated:"
@@ -53,13 +54,13 @@ folders=( $(ls -d $pattern | sed -r 's/\/\.git$//g') )
 total_repos=${#folders[@]}
 export total_repos
 
-working_dir=$(pwd)
-export working_dir
+wd=$(pwd)
+export wd
 
 echo -n "" > .repos_left
 
 for folder in ${folders[@]}; do
-  echo $folder >> "$working_dir/.repos_left"
+  echo $folder >> "$wd/.repos_left"
 done
 
 echo -e "Starting to pull from ${CYAN}${#folders[@]}${NC} repositories"
